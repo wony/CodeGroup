@@ -13,14 +13,14 @@ class CUser
 {
 private:
     RANK_USER_STATE m_eState;
-    uint32_t    m_nRating;
-    uint32_t    m_nUserIndex;
+    unsigned int    m_nRating;
+    unsigned int    m_nUserIndex;
 public:
     CUser() : m_eState(RANK_USER_STATE_NONE), m_nRating(0), m_nUserIndex(0) {};
     ~CUser() {};
 
     void        SetRankState(RANK_USER_STATE eState) { m_nRating = eState; }
 
-    uint32_t    GetRankRating() { return m_nRating; }
-    uint32_t    GetUserIndex() { return m_nUserIndex; }
+    unsigned int    GetRankRating() { return m_nRating; }
+    unsigned int    GetUserIndex() { return m_nUserIndex; }
 };

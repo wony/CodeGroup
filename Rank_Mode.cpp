@@ -1,4 +1,5 @@
 #include "Rank_Mode.h"
+#include <windows.h>
 
 CRankMode::CRankMode() : m_bRun(false)
 {

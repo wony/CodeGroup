@@ -52,7 +52,7 @@ bool CRankTeamUnit::EnterUser(CUser* pUser)
 
     m_UserList.push_back(pUser);
 
-    uint32_t nAvrRating;
+    uint32_t nAvrRating = 0;
     for (auto& rVal : m_UserList)
     {
         nAvrRating += rVal->GetRankRating();
@@ -80,7 +80,7 @@ bool CRankTeamUnit::LeaveUser(uint32_t nUserIndex)
 
 CUser* CRankTeamUnit::GetUser_Sequence(char index)
 {
-    if (index > m_UserList.size())
+    if (index > (char)m_UserList.size())
         return nullptr;
 
     return m_UserList[index];
@@ -91,7 +91,7 @@ CUser* CRankTeamUnit::GetUserInfo_UserIndex(uint32_t nUserIndex)
     for (auto iter = m_UserList.begin(); iter != m_UserList.end(); iter++)
     {
         CUser *pUser = (*iter);
-        if (pUser->GetUserIndex == nUserIndex)
+        if (pUser->GetUserIndex() == nUserIndex)
         {
             return pUser;
         }

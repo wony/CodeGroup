@@ -44,7 +44,7 @@ public:
 
     void        SetState(RANK_GROUP_STATE eState) { m_eState = eState; }
     RANK_GROUP_STATE    GetState() { return m_eState; }
-    bool        CheckState(RANK_GROUP_STATE eState) { (m_eState == eState) ? true : false; }
+    bool        CheckState(RANK_GROUP_STATE eState) { return (m_eState == eState) ? true : false; }
 
     std::chrono::system_clock::time_point   GetCreateTime() { return m_tCreateTime; }
     

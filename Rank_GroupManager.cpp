@@ -169,6 +169,8 @@ void CRankGroupManager::_SetEmptyGroup(CRankGroupUnit* pGroupInfo)
 bool CRankGroupManager::_BattleCreate(CRankGroupUnit* pGroupInfo)
 {
     // 배틀관련 정보를 세팅
+    pGroupInfo;
+    return true;
 }
 
 bool CRankGroupManager::AddGroup(CRankGroupUnit* pGroupInfo)
@@ -187,7 +189,7 @@ bool CRankGroupManager::DeleteGroup(int32_t ui32GroupID)
 
     for (auto& rVal : m_RankGroupList)
     {
-        if (rVal->GetGroupID == ui32GroupID)
+        if (rVal->GetGroupID() == ui32GroupID)
         {
             _SetEmptyGroup(rVal);
             return true;
@@ -201,7 +203,7 @@ CRankGroupUnit* CRankGroupManager::GetGroupByIdx(int32_t i32idx)
 {
     for (auto& rVal : m_RankGroupList)
     {
-        if (rVal->GetGroupID == i32idx)
+        if (rVal->GetGroupID() == i32idx)
         {
             return rVal;
         }

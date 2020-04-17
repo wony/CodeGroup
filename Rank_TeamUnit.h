@@ -42,12 +42,12 @@ public:
     bool    TeamCreateInit(CUser* pUser);
 
     void    SetState(RANK_TEAM_STATE eState) { m_eState = eState; }
-    bool    IsState(RANK_TEAM_STATE eState) { (m_eState == eState) ? true : false; }
+    bool    IsState(RANK_TEAM_STATE eState) { return (m_eState == eState) ? true : false; }
     
     bool    GetMatchingTimeout();
     void    SetMatchingTimeout();
 
-    size_t  GetCurUserCount() { m_UserList.size(); }
+    size_t  GetCurUserCount() { return m_UserList.size(); }
 
     bool    EnterUser(CUser* pUser);
     bool    LeaveUser(uint32_t nUserIndex);
