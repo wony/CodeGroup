@@ -2,6 +2,7 @@
 
 #include "Rank_TeamUnit.h"
 #include <chrono>
+#include <memory>
 
 enum RANK_GROUP_STATE
 {
@@ -29,14 +30,14 @@ private:
 
     std::chrono::system_clock::time_point m_tCreateTime;
 
-    std::vector<CRankTeamUnit*> m_pTeamInfo;
+    std::vector<std::shared_ptr<CRankTeamUnit>> m_pTeamInfo;
 
 public:
     CRankGroupUnit();
     ~CRankGroupUnit();
 
-    bool            InsertTeam(CRankTeamUnit* pTeamInfo);
-    CRankTeamUnit*  GetTeamInfo(uint32_t nTeamIndex);
+    bool            InsertTeam(std::shared_ptr<CRankTeamUnit> pTeamInfo);
+    std::shared_ptr<CRankTeamUnit>  GetTeamInfo(uint32_t nTeamIndex);
     void            ResetTeamInfo();
 
     uint32_t    GetMatchRating() { return m_nRating; }

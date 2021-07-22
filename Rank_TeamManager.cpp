@@ -20,12 +20,9 @@ void CRankTeamManager::Destroy()
 void CRankTeamManager::Update()
 {
 	// 매칭중인 팀 타임아웃 확인을 위한 루프
-	for (auto it = m_mapTeamList.begin(); it != m_mapTeamList.end(); it++)
+	for (auto& rVal : m_mapTeamList)
 	{
-		CRankTeamUnit* pTeamInfo = it->second;
-		if (NULL == pTeamInfo)
-			continue;
-
+		std::shared_ptr<CRankTeamUnit> pTeamInfo = rVal.second;
 		if (false == pTeamInfo->IsState(RANK_TEAM_STATE_MATCHING))
 			continue;
 
@@ -39,36 +36,34 @@ void CRankTeamManager::Update()
 	}
 }
 
-CRankTeamUnit* CRankTeamManager::NewTeam(CUser* pUser)
+std::shared_ptr<CRankTeamUnit> CRankTeamManager::NewTeam(CUser* pUser)
 {
-	if (NULL == pUser)
-		return NULL;
+	if (nullptr == pUser)
+		return nullptr;
 
-	CRankTeamUnit* pTeamInfo = new CRankTeamUnit();
-	if (NULL == pTeamInfo)
-		return NULL;
-
+	auto pTeamInfo = std::make_shared<CRankTeamUnit>();
+	
 	// 팀을 만드는 유저를 방장으로 만들면서 상태 값 등 데이터 초기화
 	if (false == pTeamInfo->TeamCreateInit(pUser))
 	{
-		delete pTeamInfo;
-		return NULL;
+		pTeamInfo.reset();
+		return nullptr;
 	}
 
 	// 팀 관리를 위한 리스트.
 	auto InsertResult = m_mapTeamList.insert(std::make_pair(pTeamInfo->GetTeamID(), pTeamInfo));
 	if (false == InsertResult.second)
 	{
-		delete pTeamInfo;
-		return NULL;
+		pTeamInfo.reset();
+		return nullptr;
 	}
 
 	// 팀 구성을 위한 리스트
 	auto mulResult = m_multimapRatingTeamList.insert(std::make_pair(pTeamInfo->GetMatchRating(), pTeamInfo));
-	if (false == mulResult->second)
+	if (nullptr == mulResult->second)
 	{
-		delete pTeamInfo;
-		return NULL;
+		pTeamInfo.reset();
+		return nullptr;
 	}
 
 	return pTeamInfo;
@@ -78,6 +73,9 @@ bool CRankTeamManager::DeleteTeam(uint32_t ui32TeamID)
 {
 	auto itTeam = m_mapTeamList.find(ui32TeamID);
 	if (itTeam == m_mapTeamList.end())
+		return false;
+
+	if (!itTeam->second.get())
 		return false;
 
 	// 매칭 리스트 - multimap 임으로 범위내 검색.
@@ -92,7 +90,7 @@ bool CRankTeamManager::DeleteTeam(uint32_t ui32TeamID)
 	}
 
 	// 포인터 삭제
-	delete itTeam->second;
+	itTeam->second.reset();
 
 	// 팀 관리 리스트에서 삭제.
 	m_mapTeamList.erase(ui32TeamID);
@@ -100,22 +98,22 @@ bool CRankTeamManager::DeleteTeam(uint32_t ui32TeamID)
 	return true;
 }
 
-CRankTeamUnit* CRankTeamManager::FindTeam(uint32_t ui32TeamID)
+std::shared_ptr<CRankTeamUnit> CRankTeamManager::FindTeam(uint32_t ui32TeamID)
 {
 	auto itTeam = m_mapTeamList.find(ui32TeamID);
 	if (itTeam == m_mapTeamList.end())
-		return false;
+		return nullptr;
 
-	return (CRankTeamUnit*)itTeam->second;
+	return itTeam->second;
 }
 
-CRankTeamUnit* CRankTeamManager::FindMatchingTeam_Idx(int32_t i32Idx)
+std::shared_ptr<CRankTeamUnit> CRankTeamManager::FindMatchingTeam_Idx(int32_t i32Idx)
 {
 	if (i32Idx >= m_multimapRatingTeamList.size())
-		return NULL;
+		return nullptr;
 
     int32_t i32Count = 0;
-	for (auto itTeam : m_multimapRatingTeamList)
+	for (auto& itTeam : m_multimapRatingTeamList)
 	{
 		// 팀 상태를 체크.
 		if (false == itTeam.second->IsState(RANK_TEAM_STATE_MATCHING))
@@ -132,16 +130,16 @@ CRankTeamUnit* CRankTeamManager::FindMatchingTeam_Idx(int32_t i32Idx)
 		i32Count++;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
-CRankTeamUnit * CRankTeamManager::FindMatchTeam(CRankTeamUnit * pTeamInfo)
+std::shared_ptr<CRankTeamUnit> CRankTeamManager::FindMatchTeam(std::shared_ptr<CRankTeamUnit> pTeamInfo)
 {
 	// 이미 그룹에 속한 1팀과 레이팅을 비교하여 적절한 팀을 찾아 리턴.
 
-	if (NULL == pTeamInfo)
+	if (nullptr == pTeamInfo)
 	{
-		return NULL;
+		return nullptr;
 	}
 		
 	int i32TeamRating = (int)pTeamInfo->GetMatchRating();
@@ -152,7 +150,7 @@ CRankTeamUnit * CRankTeamManager::FindMatchTeam(CRankTeamUnit * pTeamInfo)
 	auto iterUpper = m_multimapRatingTeamList.upper_bound(i32TeamRating + RANK_MAX_DIFF_MATCHING_POINT);
 
     uint32_t ui32MinDiffRP = RANK_MAX_DIFF_MATCHING_POINT + 1;
-	CRankTeamUnit* pTeamMinDiffRP = NULL;
+	std::shared_ptr<CRankTeamUnit> pTeamMinDiffRP;
 	for (auto i = iterLower; i != iterUpper; ++i)
 	{
 		if (false == i->second->IsState(RANK_TEAM_STATE_MATCHING))
@@ -177,7 +175,7 @@ CRankTeamUnit * CRankTeamManager::FindMatchTeam(CRankTeamUnit * pTeamInfo)
 	return pTeamMinDiffRP;
 }
 
-void CRankTeamManager::AddRatingTeamList(CRankTeamUnit * pTeamInfo)
+void CRankTeamManager::AddRatingTeamList(std::shared_ptr<CRankTeamUnit> pTeamInfo)
 {
     m_multimapRatingTeamList.insert(std::make_pair(pTeamInfo->GetMatchRating(), pTeamInfo));
 }

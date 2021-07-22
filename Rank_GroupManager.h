@@ -3,6 +3,7 @@
 #include "Rank_GroupUnit.h"
 #include <deque>
 #include <chrono>
+#include <memory>
 
 #define RANK_GROUP_QUEUE_SIZE 100
 #define RANK_CHECK_LOOP_COUNT 10
@@ -13,11 +14,11 @@
 class CRankGroupManager
 {
 private:
-    std::deque<CRankGroupUnit*> m_RankGroupList;
-    std::deque<CRankGroupUnit*> m_TempGroupList;
+    std::deque<std::shared_ptr<CRankGroupUnit>> m_RankGroupList;
+    std::deque<std::shared_ptr<CRankGroupUnit>> m_TempGroupList;
 
-	void                        _SetEmptyGroup(CRankGroupUnit* pGroupInfo);
-    bool                        _BattleCreate(CRankGroupUnit* pGroupInfo);
+	void                        _SetEmptyGroup(std::shared_ptr<CRankGroupUnit> pGroupInfo);
+    bool                        _BattleCreate(std::shared_ptr<CRankGroupUnit> pGroupInfo);
 
 public:
 	CRankGroupManager(void);
@@ -26,12 +27,12 @@ public:
 	bool						Create();
 	void						Update();
 
-	CRankGroupUnit*				GetEmptyGroup();
+	std::shared_ptr<CRankGroupUnit>	GetEmptyGroup();
 
-	bool						AddGroup(CRankGroupUnit* pGroupInfo);
+	bool						AddGroup(std::shared_ptr<CRankGroupUnit> pGroupInfo);
 	bool						DeleteGroup(int32_t ui32GroupID);
 
-    CRankGroupUnit*				GetGroupByIdx(int32_t i32idx);
+	std::shared_ptr<CRankGroupUnit>	GetGroupByIdx(int32_t i32idx);
     int32_t						GetGroupCount() { return m_RankGroupList.size(); }
 
 };

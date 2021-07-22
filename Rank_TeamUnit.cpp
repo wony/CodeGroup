@@ -88,12 +88,11 @@ CUser* CRankTeamUnit::GetUser_Sequence(char index)
 
 CUser* CRankTeamUnit::GetUserInfo_UserIndex(uint32_t nUserIndex)
 {
-    for (auto iter = m_UserList.begin(); iter != m_UserList.end(); iter++)
+    for (auto& rVal : m_UserList)
     {
-        CUser *pUser = (*iter);
-        if (pUser->GetUserIndex() == nUserIndex)
+        if (rVal->GetUserIndex() == nUserIndex)
         {
-            return pUser;
+            return (CUser*)rVal;
         }
     }
 

@@ -8,8 +8,8 @@ CRankGroupManager::~CRankGroupManager()
 {
     for (int32_t i = 0; i < m_TempGroupList.size(); i++)
     {
-        CRankGroupUnit* Group = m_TempGroupList.front();
-        delete(Group);
+        auto Group = m_TempGroupList.front();
+		Group.reset();
 
         m_TempGroupList.pop_front();
     }
@@ -19,7 +19,7 @@ bool CRankGroupManager::Create()
 {
 	for (int32_t i = 0; i < RANK_GROUP_QUEUE_SIZE; i++)
 	{
-        CRankGroupUnit* pRankGroupInfo = new CRankGroupUnit;
+		std::shared_ptr<CRankGroupUnit> pRankGroupInfo = std::make_shared<CRankGroupUnit>();
 
 		// 빈 그룹 세팅
         m_TempGroupList.push_back(pRankGroupInfo);
@@ -43,7 +43,7 @@ void CRankGroupManager::Update()
 	std::deque<uint32_t> DeleteGroupIdList;
 	for (int32_t i = 0; i < i32LoopCount; i++)
 	{
-		CRankGroupUnit* pGroupInfo = (CRankGroupUnit*)m_RankGroupList.front();
+		auto pGroupInfo = m_RankGroupList.front();
 		if (nullptr == pGroupInfo)
 			continue;
 
@@ -101,8 +101,8 @@ void CRankGroupManager::Update()
 			// 팀 상태를 매칭 이전 시점으로 돌린 후 그룹 해체
 			for (char idx = 0; idx != 2; idx++)
 			{
-				CRankTeamUnit* pTeamInfo = pGroupInfo->GetTeamInfo(idx);
-				if (nullptr == pTeamInfo)
+				auto pTeamInfo = pGroupInfo->GetTeamInfo(idx);
+				if (!pTeamInfo.get())
 					continue;
 
 				// 각 팀의 유저들에게 실패 패킷 전송.
@@ -145,35 +145,36 @@ void CRankGroupManager::Update()
 	}
 }
 
-CRankGroupUnit* CRankGroupManager::GetEmptyGroup()
+std::shared_ptr<CRankGroupUnit> CRankGroupManager::GetEmptyGroup()
 {
 	if (0 == m_TempGroupList.size())
 		return nullptr;
 
 	// 매칭 그룹 세팅을 위해 빈 그룹 리스트에서 얻어 옴
-	CRankGroupUnit* pGroupInfo = static_cast<CRankGroupUnit*>(m_TempGroupList.front());
-	if (nullptr == pGroupInfo)
+	auto pGroupInfo = m_TempGroupList.front();
+	if (!pGroupInfo.get())
 		return nullptr;
 
     m_TempGroupList.pop_front();
 
+	pGroupInfo->ResetTeamInfo();
 	return pGroupInfo;
 }
 
-void CRankGroupManager::_SetEmptyGroup(CRankGroupUnit* pGroupInfo)
+void CRankGroupManager::_SetEmptyGroup(std::shared_ptr<CRankGroupUnit> pGroupInfo)
 {
 	// 사용이 끝난 그룹 재 삽입
 	return m_TempGroupList.push_back(pGroupInfo);
 }
 
-bool CRankGroupManager::_BattleCreate(CRankGroupUnit* pGroupInfo)
+bool CRankGroupManager::_BattleCreate(std::shared_ptr<CRankGroupUnit> pGroupInfo)
 {
     // 배틀관련 정보를 세팅
     pGroupInfo;
     return true;
 }
 
-bool CRankGroupManager::AddGroup(CRankGroupUnit* pGroupInfo)
+bool CRankGroupManager::AddGroup(std::shared_ptr<CRankGroupUnit> pGroupInfo)
 {
 	if (nullptr == pGroupInfo)
 		return false;
@@ -189,6 +190,9 @@ bool CRankGroupManager::DeleteGroup(int32_t ui32GroupID)
 
     for (auto& rVal : m_RankGroupList)
     {
+		if (!rVal.get())
+			continue;
+
         if (rVal->GetGroupID() == ui32GroupID)
         {
             _SetEmptyGroup(rVal);
@@ -199,10 +203,13 @@ bool CRankGroupManager::DeleteGroup(int32_t ui32GroupID)
     return false;
 }
 
-CRankGroupUnit* CRankGroupManager::GetGroupByIdx(int32_t i32idx)
+std::shared_ptr<CRankGroupUnit> CRankGroupManager::GetGroupByIdx(int32_t i32idx)
 {
     for (auto& rVal : m_RankGroupList)
     {
+		if (!rVal.get())
+			continue;
+
         if (rVal->GetGroupID() == i32idx)
         {
             return rVal;

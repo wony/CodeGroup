@@ -18,12 +18,12 @@ bool CRankMode::Create(CRankGroupManager* pRankGroupManager, CRankTeamManager* p
 {
 	m_pRankTeamManager = pRankTeamManager;
 
-	if (NULL == m_pRankTeamManager)
+	if (nullptr == m_pRankTeamManager)
 		return false;
     
 	m_pRankGroupManager = pRankGroupManager;
 
-	if (NULL == m_pRankGroupManager)
+	if (nullptr == m_pRankGroupManager)
 		return false;
 
 	if (false == m_pRankGroupManager->Create())
@@ -52,15 +52,8 @@ void CRankMode::Update()
 void CRankMode::_Update_MakeMatch()
 {
 	// 매칭 팀 체크를 위한 그룹 생성
-	CRankGroupUnit	stGroupInfo;
-    stGroupInfo.ResetTeamInfo();
-
-	int32_t nResult = _MakeGroup(&stGroupInfo);
-	if (GROUP_MAKE_SUCCESS != nResult)
-		return;
-
-	CRankGroupUnit* pGroupInfo = _CreateGroup(&stGroupInfo);
-	if (NULL == pGroupInfo)
+	auto pGroupInfo = _CreateGroup();
+	if (!pGroupInfo.get())
 	{
 		//Write Log
 		return;
@@ -73,7 +66,7 @@ void CRankMode::_Update_MakeMatch()
 	// ......
 }
 
-int32_t CRankMode::_MakeGroup(CRankGroupUnit* pRankGroupInfo)
+int32_t CRankMode::_MakeGroup(std::shared_ptr<CRankGroupUnit> pRankGroupInfo)
 {
     int32_t nCount = m_pRankTeamManager->GetMatchingTeamCount();
 
@@ -84,8 +77,8 @@ int32_t CRankMode::_MakeGroup(CRankGroupUnit* pRankGroupInfo)
 	// 한 팀을 기준으로 잡고 매칭 가능한 다른 팀을 검색
 	for (int32_t idx = 0; idx < nCount; idx++)
 	{
-		CRankTeamUnit* pTeamInfo = m_pRankTeamManager->FindMatchingTeam_Idx(idx);
-		if (NULL == pTeamInfo)
+		auto pTeamInfo = m_pRankTeamManager->FindMatchingTeam_Idx(idx);
+		if (!pTeamInfo.get())
 			continue;
 
 		if (false == pRankGroupInfo->InsertTeam(pTeamInfo))
@@ -94,11 +87,9 @@ int32_t CRankMode::_MakeGroup(CRankGroupUnit* pRankGroupInfo)
 			return GROUP_MAKE_FAIL;
 		}
 
-		CRankTeamUnit* pOtherTeamInfo = m_pRankTeamManager->FindMatchTeam(pTeamInfo);
-		if (NULL == pOtherTeamInfo)
-		{
+		auto pOtherTeamInfo = m_pRankTeamManager->FindMatchTeam(pTeamInfo);
+		if (!pOtherTeamInfo.get())
 			continue;
-		}
 
 		if (false == pRankGroupInfo->InsertTeam(pTeamInfo))
 		{
@@ -134,8 +125,8 @@ bool CRankMode::CreateTeam(CUser* pUser)
 {
 	// NewTeam() - 팀 생성, 초기화 작업.
 	// 대기중인 팀 리스트에 추가.
-	CRankTeamUnit* pTeamInfo = m_pRankTeamManager->NewTeam(pUser);
-    if (NULL == pTeamInfo)
+	auto pTeamInfo = m_pRankTeamManager->NewTeam(pUser);
+    if (!pTeamInfo.get())
     {
         // Log
         return false;
@@ -147,8 +138,8 @@ bool CRankMode::CreateTeam(CUser* pUser)
 bool CRankMode::EnterTeam(CUser* pUser, uint32_t nTeamId)
 {
 	// 리스트에서 팀 찾아 리턴.
-	CRankTeamUnit* pTeamInfo = m_pRankTeamManager->FindTeam(nTeamId);
-    if (NULL == pTeamInfo)
+	auto pTeamInfo = m_pRankTeamManager->FindTeam(nTeamId);
+    if (!pTeamInfo.get())
     {
         // 팀 찾기 에러 로그
         return false;
@@ -175,15 +166,15 @@ bool CRankMode::EnterTeam(CUser* pUser, uint32_t nTeamId)
 
 bool CRankMode::LeaveTeam(uint32_t nUserID, uint32_t nTeamId)
 {
-	CRankTeamUnit* pTeamInfo = m_pRankTeamManager->FindTeam(nTeamId);
-    if (NULL == pTeamInfo)
+	auto pTeamInfo = m_pRankTeamManager->FindTeam(nTeamId);
+    if (!pTeamInfo.get())
     {
         // 팀을 찾을 수 없음
         return false;
     }
 
 	CUser* pUser = pTeamInfo->GetUserInfo_UserIndex(nUserID);
-    if (NULL == pUser)
+    if (nullptr == pUser)
     {
         // 유저를 찾을 수 없음
         return false;
@@ -211,12 +202,12 @@ bool CRankMode::LeaveTeam(uint32_t nUserID, uint32_t nTeamId)
 
 bool CRankMode::StartTeam(uint32_t nUserID, uint32_t nTeamID, CRankTeamUnit** ppTeamInfo)
 {
-	CRankTeamUnit* pTeamInfo = m_pRankTeamManager->FindTeam(nTeamID);
-	if (NULL == pTeamInfo)
+	auto pTeamInfo = m_pRankTeamManager->FindTeam(nTeamID);
+	if (!pTeamInfo.get())
 		return false;
 
 	CUser* pUser = pTeamInfo->GetUserInfo_UserIndex(nUserID);
-	if (NULL == pUser)
+	if (nullptr == pUser)
 		return false;
 	if (false == pTeamInfo->IsState(RANK_TEAM_STATE_MAKE_UP))
 		return false;
@@ -224,7 +215,7 @@ bool CRankMode::StartTeam(uint32_t nUserID, uint32_t nTeamID, CRankTeamUnit** pp
 	for (char i = 0; i < RANK_TEAM_USER_COUNT; i++)
 	{
         CUser* pMember = pTeamInfo->GetUser_Sequence(i);
-		if (NULL == pMember)
+		if (nullptr == pMember)
 			continue;
 
 		pMember->SetRankState(RANK_USER_STATE_MATCHING_WAIT);
@@ -238,19 +229,26 @@ bool CRankMode::StartTeam(uint32_t nUserID, uint32_t nTeamID, CRankTeamUnit** pp
 	return true;
 }
 
-CRankGroupUnit* CRankMode::_CreateGroup(CRankGroupUnit* pGroupInfo)
+std::shared_ptr<CRankGroupUnit> CRankMode::_CreateGroup()
 {
-	CRankGroupUnit* pEmptyGroupInfo = m_pRankGroupManager->GetEmptyGroup();
-	if (NULL == pEmptyGroupInfo)
-		return NULL;
+	auto pEmptyGroupInfo = m_pRankGroupManager->GetEmptyGroup();
+	if (!pEmptyGroupInfo.get())
+		return nullptr;
+
+	int32_t nResult = _MakeGroup(pEmptyGroupInfo);
+	if (GROUP_MAKE_SUCCESS != nResult)
+	{
+		_DeleteGroup(pEmptyGroupInfo);
+		return nullptr;
+	}
 
 	if (false == m_pRankGroupManager->AddGroup(pEmptyGroupInfo))
-		return NULL;
+		return nullptr;
 
 	return pEmptyGroupInfo;
 }
 
-bool CRankMode::_DeleteGroup(CRankGroupUnit* pGroupInfo)
+bool CRankMode::_DeleteGroup(std::shared_ptr<CRankGroupUnit> pGroupInfo)
 {
 	if (false == m_pRankGroupManager->DeleteGroup(pGroupInfo->GetGroupID()))
 	{

@@ -4,6 +4,7 @@
 #include "Rank_GroupManager.h"
 #include "Rank_TeamUnit.h"
 #include <thread>
+#include <memory>
 
 #define RANK_MAX_DIFF_ENTER_TEAM_RP 50
 
@@ -26,14 +27,14 @@ private:
 	CRankGroupManager*			m_pRankGroupManager;
 
 private:
-    int32_t						_MakeGroup(CRankGroupUnit* pRankGroupInfo);
+    int32_t						_MakeGroup(std::shared_ptr<CRankGroupUnit> pRankGroupInfo);
 
 	void						_Update_MakeMatch();
 	void						_Update_RankGroup();
 	void						_Update_RankTeam();
 
-	CRankGroupUnit*				_CreateGroup(CRankGroupUnit* pGroupInfo);
-    bool                        _DeleteGroup(CRankGroupUnit* pGroupInfo);
+	std::shared_ptr<CRankGroupUnit>	_CreateGroup();
+    bool                        _DeleteGroup(std::shared_ptr<CRankGroupUnit> pGroupInfo);
 
 public:
 	CRankMode(void);
